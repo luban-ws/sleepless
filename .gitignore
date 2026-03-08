@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+.venv/
+
+# Xcode
+app/build/
+app/DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+
+# macOS
+.DS_Store

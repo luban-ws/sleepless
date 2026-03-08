@@ -1,0 +1,16 @@
+{
+  "name": "sleepless",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mac 防休眠应用（Caffeine 替代）",
+  "scripts": {
+    "prepare": "husky",
+    "build:app": "xcodebuild -project app/Sleepless.xcodeproj -scheme Sleepless -configuration Debug -quiet build",
+    "build:app:release": "xcodebuild -project app/Sleepless.xcodeproj -scheme Sleepless -configuration Release -quiet build",
+    "generate-icon": "node scripts/generate-icon.mjs"
+  },
+  "devDependencies": {
+    "husky": "^9.0.11",
+    "sharp": "^0.33.5"
+  }
+}

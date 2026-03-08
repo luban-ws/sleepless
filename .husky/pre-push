@@ -1,0 +1,2 @@
+# 推送前再次构建 Mac 应用
+npm run build:app
