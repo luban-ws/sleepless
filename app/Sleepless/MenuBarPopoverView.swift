@@ -45,15 +45,6 @@ struct MenuBarPopoverView: View {
             Divider()
 
             HStack {
-                if #available(macOS 14.0, *) {
-                    SettingsLink {
-                        Label("偏好设置…", systemImage: "gearshape")
-                    }
-                } else {
-                    Button("偏好设置…") {
-                        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-                    }
-                }
                 Spacer()
                 Button("退出 Sleepless") {
                     appDelegate.quit()

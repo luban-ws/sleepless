@@ -13,9 +13,6 @@ struct SleeplessApp: App {
     @StateObject private var prefs = PreferencesStore.shared
 
     var body: some Scene {
-        Settings {
-            SettingsView()
-        }
         MenuBarExtra {
             MenuBarPopoverView(appDelegate: appDelegate, prefs: prefs)
         } label: {
@@ -28,6 +25,9 @@ struct SleeplessApp: App {
 // MARK: - 应用级代理：防休眠与定时器（可被 SwiftUI 观察）
 
 final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
+    /// 是否已完成启动（用于避免首次渲染时 didSet 触发登录项对话框）
+    static var hasFinishedLaunching = false
+
     private let sleepGuard = SleepGuard()
     private let prefs = PreferencesStore.shared
 
@@ -45,13 +45,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
-        // 不在启动时同步登录项，避免首次启动弹出系统「是否允许在登录时运行」对话框
-        // 用户打开「开机时启动」时由 PreferencesStore.didSet 调用 LaunchAtLoginManager
-
         isPreventingSleep = sleepGuard.isPreventingSleep
 
         if prefs.activateOnLaunch {
             startPreventingSleep(with: prefs.defaultDuration)
+        }
+
+        // 延迟一帧再标记启动完成，避免 UI 首次绑定触发 launchAtLogin didSet 弹出系统对话框
+        DispatchQueue.main.async {
+            AppDelegate.hasFinishedLaunching = true
         }
     }
 

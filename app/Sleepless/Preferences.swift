@@ -103,7 +103,9 @@ final class PreferencesStore: ObservableObject {
     @Published var launchAtLogin: Bool {
         didSet {
             defaults.set(launchAtLogin, forKey: PreferencesKeys.launchAtLogin)
-            if #available(macOS 13.0, *) { LaunchAtLoginManager.isEnabled = launchAtLogin }
+            // 仅在启动完成后才同步登录项，避免首次启动或 UI 绑定时的 didSet 触发系统对话框
+            guard AppDelegate.hasFinishedLaunching, #available(macOS 13.0, *) else { return }
+            LaunchAtLoginManager.isEnabled = launchAtLogin
         }
     }
 
