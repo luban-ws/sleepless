@@ -18,7 +18,8 @@ struct MenuBarPopoverView: View {
             Picker("", selection: $selectedTab) {
                 Text("状态").tag(0)
                 Text("通用").tag(1)
-                Text("外观").tag(2)
+                Text("计划").tag(2)
+                Text("外观").tag(3)
             }
             .pickerStyle(.segmented)
             .padding(.horizontal, 16)
@@ -35,6 +36,8 @@ struct MenuBarPopoverView: View {
                 case 1:
                     GeneralTab(prefs: prefs)
                 case 2:
+                    ScheduleTab(prefs: prefs, appDelegate: appDelegate)
+                case 3:
                     AppearanceTab(prefs: prefs)
                 default:
                     StatusTab(appDelegate: appDelegate, prefs: prefs)
@@ -82,7 +85,7 @@ private struct StatusTab: View {
                 .padding(.vertical, 10)
             }
             .buttonStyle(.borderedProminent)
-            .tint(appDelegate.isPreventingSleep ? .orange : .accentColor)
+            .tint(appDelegate.isPreventingSleep ? .green : .accentColor)
             .controlSize(.large)
 
             Divider()
@@ -91,8 +94,8 @@ private struct StatusTab: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 90))], spacing: 8) {
-                ForEach(DefaultDuration.allCases, id: \.id) { duration in
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))], spacing: 6) {
+                ForEach(DefaultDuration.sortedForDisplay, id: \.id) { duration in
                     Button {
                         appDelegate.selectDuration(duration)
                     } label: {
@@ -127,7 +130,7 @@ private struct GeneralTab: View {
 
             Section {
                 Picker("默认防休眠时长", selection: $prefs.defaultDurationMinutes) {
-                    ForEach(DefaultDuration.allCases, id: \.id) { d in
+                    ForEach(DefaultDuration.sortedForDisplay, id: \.id) { d in
                         Text(d.label).tag(d.rawValue)
                     }
                 }
@@ -136,6 +139,53 @@ private struct GeneralTab: View {
                 Text("默认时长")
             } footer: {
                 Text("点击「开启防休眠」时使用的默认时长。")
+            }
+        }
+        .formStyle(.grouped)
+        .padding(.vertical, 8)
+    }
+}
+
+// MARK: - 计划：每日时间段自动防休眠
+
+private struct ScheduleTab: View {
+    @ObservedObject var prefs: PreferencesStore
+    @ObservedObject var appDelegate: AppDelegate
+
+    private func dateFrom(minutes: Int) -> Date {
+        Calendar.current.date(bySettingHour: minutes / 60, minute: minutes % 60, second: 0, of: Date()) ?? Date()
+    }
+
+    private func minutesFrom(date: Date) -> Int {
+        let c = Calendar.current
+        return c.component(.hour, from: date) * 60 + c.component(.minute, from: date)
+    }
+
+    var body: some View {
+        Form {
+            Toggle("按计划自动防休眠", isOn: $prefs.scheduleEnabled)
+                .onChange(of: prefs.scheduleEnabled) { _ in
+                    appDelegate.refreshSchedule()
+                }
+            Section {
+                DatePicker("开始时间", selection: Binding(
+                    get: { dateFrom(minutes: prefs.scheduleStartMinutes) },
+                    set: {
+                        prefs.scheduleStartMinutes = minutesFrom(date: $0)
+                        appDelegate.refreshSchedule()
+                    }
+                ), displayedComponents: .hourAndMinute)
+                DatePicker("结束时间", selection: Binding(
+                    get: { dateFrom(minutes: prefs.scheduleEndMinutes) },
+                    set: {
+                        prefs.scheduleEndMinutes = minutesFrom(date: $0)
+                        appDelegate.refreshSchedule()
+                    }
+                ), displayedComponents: .hourAndMinute)
+            } header: {
+                Text("每日时段")
+            } footer: {
+                Text("在开始与结束时间之间自动开启防休眠，其余时间自动关闭。")
             }
         }
         .formStyle(.grouped)

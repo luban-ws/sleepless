@@ -14,6 +14,9 @@ enum PreferencesKeys {
     static let activateOnLaunch = "activateOnLaunch"
     static let defaultDurationMinutes = "defaultDurationMinutes"
     static let iconStyle = "iconStyle"
+    static let scheduleEnabled = "scheduleEnabled"
+    static let scheduleStartMinutes = "scheduleStartMinutes"
+    static let scheduleEndMinutes = "scheduleEndMinutes"
 }
 
 // MARK: - 菜单栏图标风格（可切换）
@@ -65,10 +68,18 @@ enum MenuBarIconStyle: String, CaseIterable, Identifiable {
 
 enum DefaultDuration: Int, CaseIterable, Identifiable {
     case fiveMin = 5
+    case tenMin = 10
     case fifteenMin = 15
+    case twentyMin = 20
     case thirtyMin = 30
+    case fortyFiveMin = 45
     case oneHour = 60
     case twoHours = 120
+    case threeHours = 180
+    case fourHours = 240
+    case sixHours = 360
+    case eightHours = 480
+    case twelveHours = 720
     case indefinite = 0
 
     var id: Int { rawValue }
@@ -81,12 +92,27 @@ enum DefaultDuration: Int, CaseIterable, Identifiable {
     var label: String {
         switch self {
         case .fiveMin: return "5 分钟"
+        case .tenMin: return "10 分钟"
         case .fifteenMin: return "15 分钟"
+        case .twentyMin: return "20 分钟"
         case .thirtyMin: return "30 分钟"
+        case .fortyFiveMin: return "45 分钟"
         case .oneHour: return "1 小时"
         case .twoHours: return "2 小时"
+        case .threeHours: return "3 小时"
+        case .fourHours: return "4 小时"
+        case .sixHours: return "6 小时"
+        case .eightHours: return "8 小时"
+        case .twelveHours: return "12 小时"
         case .indefinite: return "不自动关闭"
         }
+    }
+
+    /// 用于列表展示的排序（不自动关闭放最后）
+    static var sortedForDisplay: [DefaultDuration] {
+        let withDuration = allCases.filter { !$0.isIndefinite }
+        let sorted = withDuration.sorted { $0.rawValue < $1.rawValue }
+        return sorted + [.indefinite]
     }
 
     static func from(minutes: Int) -> DefaultDuration {
@@ -137,6 +163,26 @@ final class PreferencesStore: ObservableObject {
         set { iconStyleRaw = newValue.rawValue }
     }
 
+    @Published var scheduleEnabled: Bool {
+        didSet { defaults.set(scheduleEnabled, forKey: PreferencesKeys.scheduleEnabled) }
+    }
+
+    /// 计划开始时间（距 0:00 的分钟数，0–1439）
+    @Published var scheduleStartMinutes: Int {
+        didSet {
+            let v = min(1439, max(0, scheduleStartMinutes))
+            defaults.set(v, forKey: PreferencesKeys.scheduleStartMinutes)
+        }
+    }
+
+    /// 计划结束时间（距 0:00 的分钟数，0–1439）
+    @Published var scheduleEndMinutes: Int {
+        didSet {
+            let v = min(1439, max(0, scheduleEndMinutes))
+            defaults.set(v, forKey: PreferencesKeys.scheduleEndMinutes)
+        }
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         self.launchAtLogin = defaults.bool(forKey: PreferencesKeys.launchAtLogin)
@@ -145,5 +191,10 @@ final class PreferencesStore: ObservableObject {
         self.defaultDurationMinutes = d >= 0 ? d : 0
         let raw = defaults.string(forKey: PreferencesKeys.iconStyle)
         self.iconStyleRaw = (raw.flatMap { MenuBarIconStyle(rawValue: $0) != nil ? $0 : nil }) ?? MenuBarIconStyle.moon.rawValue
+        self.scheduleEnabled = defaults.bool(forKey: PreferencesKeys.scheduleEnabled)
+        let start = defaults.integer(forKey: PreferencesKeys.scheduleStartMinutes)
+        self.scheduleStartMinutes = (start >= 0 && start < 1440) ? start : 9 * 60
+        let end = defaults.integer(forKey: PreferencesKeys.scheduleEndMinutes)
+        self.scheduleEndMinutes = (end >= 0 && end < 1440) ? end : 17 * 60
     }
 }

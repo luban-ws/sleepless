@@ -32,6 +32,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     private let prefs = PreferencesStore.shared
 
     private var autoOffTimer: Timer?
+    private var scheduleCheckTimer: Timer?
+    /// 当前防休眠是否由计划开启（计划结束时自动关闭）
+    private var scheduleDroveOn = false
+
     private(set) var currentScheduledDuration: DefaultDuration = .indefinite
 
     private(set) var isPreventingSleep: Bool = false {
@@ -51,10 +55,64 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             startPreventingSleep(with: prefs.defaultDuration)
         }
 
-        // 延迟一帧再标记启动完成，避免 UI 首次绑定触发 launchAtLogin didSet 弹出系统对话框
+        startScheduleCheckIfNeeded()
+
         DispatchQueue.main.async {
             AppDelegate.hasFinishedLaunching = true
         }
+    }
+
+    // MARK: - 计划：按每日时段自动开/关
+
+    private func startScheduleCheckIfNeeded() {
+        scheduleCheckTimer?.invalidate()
+        scheduleCheckTimer = nil
+        guard prefs.scheduleEnabled else { return }
+        scheduleCheckTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            self?.performScheduleCheck()
+        }
+        RunLoop.main.add(scheduleCheckTimer!, forMode: .common)
+        performScheduleCheck()
+    }
+
+    private func performScheduleCheck() {
+        guard prefs.scheduleEnabled else { return }
+        let now = Calendar.current.component(.hour, from: Date()) * 60 + Calendar.current.component(.minute, from: Date())
+        let start = prefs.scheduleStartMinutes
+        let end = prefs.scheduleEndMinutes
+        let inWindow: Bool
+        if start <= end {
+            inWindow = now >= start && now < end
+        } else {
+            inWindow = now >= start || now < end
+        }
+        if inWindow {
+            if !sleepGuard.isPreventingSleep {
+                _ = sleepGuard.preventSleep()
+                scheduleDroveOn = true
+                isPreventingSleep = true
+                objectWillChange.send()
+            }
+        } else {
+            if scheduleDroveOn && sleepGuard.isPreventingSleep {
+                sleepGuard.allowSleep()
+                scheduleDroveOn = false
+                isPreventingSleep = false
+                cancelAutoOffTimer()
+                currentScheduledDuration = .indefinite
+                objectWillChange.send()
+            }
+        }
+    }
+
+    /// 用户手动切换时清除“由计划开启”标记
+    private func clearScheduleDroveOn() {
+        scheduleDroveOn = false
+    }
+
+    /// 计划开关或时间变更时由 UI 调用，重新启停计划检查
+    func refreshSchedule() {
+        startScheduleCheckIfNeeded()
     }
 
     private func startPreventingSleep(with duration: DefaultDuration) {
@@ -91,6 +149,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     func toggleSleepPrevention() {
+        clearScheduleDroveOn()
         if sleepGuard.isPreventingSleep {
             cancelAutoOffTimer()
             sleepGuard.allowSleep()
@@ -101,6 +160,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     func selectDuration(_ duration: DefaultDuration) {
+        clearScheduleDroveOn()
         if !sleepGuard.isPreventingSleep {
             _ = sleepGuard.preventSleep()
             isPreventingSleep = true
