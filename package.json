@@ -5,8 +5,9 @@
   "description": "Mac 防休眠应用（Caffeine 替代）",
   "scripts": {
     "prepare": "husky",
-    "build:app": "xcodebuild -project app/Sleepless.xcodeproj -scheme Sleepless -configuration Debug -quiet build",
-    "build:app:release": "xcodebuild -project app/Sleepless.xcodeproj -scheme Sleepless -configuration Release -quiet build",
+    "build:app": "bash scripts/build-app.sh debug",
+    "build:app:release": "bash scripts/build-app.sh release",
+    "test:swift": "swift test",
     "generate-icon": "node scripts/generate-icon.mjs"
   },
   "devDependencies": {

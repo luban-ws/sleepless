@@ -11,11 +11,7 @@ import sharp from "sharp";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SIZE = 1024;
-const OUT = path.join(
-  __dirname,
-  "..",
-  "app/Sleepless/Assets.xcassets/AppIcon.appiconset/icon_1024.png"
-);
+const OUT = path.join(__dirname, "..", "Resources", "icon_1024.png");
 
 function setPixel(buf, x, y, r, g, b, a) {
   if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) return;

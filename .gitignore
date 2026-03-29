@@ -2,11 +2,12 @@
 node_modules/
 .venv/
 
-# Xcode
-app/build/
-app/DerivedData/
-*.xcuserstate
-*.xcworkspace/xcuserdata/
+# SwiftPM
+.build/
+
+# 脚本组装的 .app 与中间产物
+build/
+Resources/AppIcon.icns
 
 # macOS
 .DS_Store
