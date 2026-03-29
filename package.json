@@ -1,19 +1,17 @@
 {
-  "name": "sleepless",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Mac 防休眠应用（Caffeine 替代）",
-  "scripts": {
-    "prepare": "husky",
-    "build:app": "bash scripts/build-app.sh debug",
-    "build:app:release": "bash scripts/build-app.sh release",
-    "deploy": "bash scripts/deploy-app.sh",
-    "test:swift": "swift test",
-    "test:deploy-script": "bash -n scripts/deploy-app.sh",
-    "generate-icon": "node scripts/generate-icon.mjs"
-  },
-  "devDependencies": {
-    "husky": "^9.0.11",
-    "sharp": "^0.33.5"
-  }
+    "name": "sleepless",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Mac 防休眠应用",
+    "scripts": {
+        "prepare": "husky",
+        "build:app": "bash scripts/build-app.sh debug",
+        "build:app:release": "bash scripts/build-app.sh release",
+        "deploy": "bash scripts/deploy-app.sh",
+        "test": "swift test"
+    },
+    "devDependencies": {
+        "husky": "^9.0.11",
+        "sharp": "^0.33.5"
+    }
 }

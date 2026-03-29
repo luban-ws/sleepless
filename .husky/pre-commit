@@ -1,2 +1,2 @@
 # 提交前构建 Mac 应用，确保可编译
-npm run build:app
+npm run test
