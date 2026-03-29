@@ -7,7 +7,9 @@
     "prepare": "husky",
     "build:app": "bash scripts/build-app.sh debug",
     "build:app:release": "bash scripts/build-app.sh release",
+    "deploy": "bash scripts/deploy-app.sh",
     "test:swift": "swift test",
+    "test:deploy-script": "bash -n scripts/deploy-app.sh",
     "generate-icon": "node scripts/generate-icon.mjs"
   },
   "devDependencies": {

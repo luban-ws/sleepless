@@ -4,6 +4,13 @@ node_modules/
 
 # SwiftPM
 .build/
+.swiftpm/
+Package.resolved
+
+# Xcode
+DerivedData/
+xcuserdata/
+*.xcuserstate
 
 # 脚本组装的 .app 与中间产物
 build/
@@ -11,3 +18,4 @@ Resources/AppIcon.icns
 
 # macOS
 .DS_Store
+*.swp
